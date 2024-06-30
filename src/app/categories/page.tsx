@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '~/trpc/react';
 import Header from '../_components/Header';
@@ -11,12 +11,21 @@ const Categories: React.FC = () => {
   const router = useRouter();
 
   const { data, isLoading } = api.auth.getCategories.useQuery({ page, limit: 6 });
+  const { data: userCategories, isLoading: userCategoriesLoading } = api.auth.getUserCategories.useQuery();
+  
   const updateCategoriesMutation = api.auth.updateUserCategories.useMutation({
     onSuccess: () => {
       setUpdateSuccess(true);
-      setTimeout(() => setUpdateSuccess(false), 3000); // Hide message after 3 seconds
+      setTimeout(() => setUpdateSuccess(false), 3000);
     },
   });
+
+  useEffect(() => {
+    if (userCategories) {
+        console.log("user category is ",userCategories);
+      setSelectedCategories(userCategories.map(cat => cat.id));
+    }
+  }, [userCategories]);
 
   const handleCategoryToggle = (categoryId: string) => {
     setSelectedCategories(prev =>
@@ -35,7 +44,8 @@ const Categories: React.FC = () => {
     router.push('/login');
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading || userCategoriesLoading) return <div>Loading...</div>;
+
 
   return (
     <div>
@@ -43,7 +53,7 @@ const Categories: React.FC = () => {
       <main className="container mx-auto mt-8 p-4">
         <h2 className="text-2xl mb-4">Select Categories</h2>
         <div className="grid grid-cols-2 gap-4 mb-4">
-          {data?.categories.map(category => (
+        {data?.categories.map(category => (
             <label key={category.id} className="flex items-center space-x-2">
               <input
                 type="checkbox"

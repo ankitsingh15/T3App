@@ -55,6 +55,14 @@ export const authRouter = createTRPCRouter({
       }
       
     }),
+    getUserCategories: protectedProcedure
+    .query(async ({ ctx }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: ctx.user.id },
+        include: { categories: true },
+      });
+      return user?.categories || [];
+    }),
 
   updateUserCategories: protectedProcedure
     .input(z.object({ categoryIds: z.array(z.string()) }))
